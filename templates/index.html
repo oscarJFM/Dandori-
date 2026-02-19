@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School of Dandori - Course Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 30px; }
+        
+        .search-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-bar input, .search-bar select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        .search-bar input { width: 300px; }
+        .search-bar select { width: 200px; }
+        .search-bar button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .search-bar button:hover { background: #0056b3; }
+        .add-btn {
+            background: #28a745 !important;
+            margin-left: 10px;
+        }
+        .add-btn:hover { background: #218838 !important; }
+        
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .course-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .course-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .course-card h3 { color: #333; margin-bottom: 10px; font-size: 18px; }
+        .course-card .class-id { 
+            color: #666; 
+            font-size: 12px; 
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .course-card .info { margin: 8px 0; font-size: 14px; color: #555; }
+        .course-card .info strong { color: #333; }
+        .course-card .cost { 
+            font-size: 20px; 
+            color: #28a745; 
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .course-card .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .course-card button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .view-btn { background: #007bff; color: white; }
+        .view-btn:hover { background: #0056b3; }
+        .edit-btn { background: #ffc107; color: #333; }
+        .edit-btn:hover { background: #e0a800; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 { margin-bottom: 20px; color: #333; }
+        .modal-content .close {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-content .close:hover { color: #333; }
+        .modal-content .field {
+            margin-bottom: 15px;
+        }
+        .modal-content .field label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .modal-content .field input,
+        .modal-content .field textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .modal-content .field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .modal-content .save-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .modal-content .save-btn:hover { background: #218838; }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 School of Dandori - Course Manager</h1>
+        
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search courses...">
+            <select id="locationFilter">
+                <option value="">All Locations</option>
+            </select>
+            <select id="typeFilter">
+                <option value="">All Types</option>
+            </select>
+            <button onclick="searchCourses()">Search</button>
+            <button class="add-btn" onclick="openAddModal()">+ Add Course</button>
+        </div>
+        
+        <div class="course-grid" id="courseGrid"></div>
+    </div>
+    
+    <!-- View Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('viewModal')">&times;</span>
+            <div id="viewContent"></div>
+        </div>
+    </div>
+    
+    <!-- Edit/Add Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+            <h2 id="editTitle">Edit Course</h2>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="field">
+                    <label>Class ID</label>
+                    <input type="text" id="editClassId" required>
+                </div>
+                <div class="field">
+                    <label>Title</label>
+                    <input type="text" id="editTitleField" required>
+                </div>
+                <div class="field">
+                    <label>Instructor</label>
+                    <input type="text" id="editInstructor">
+                </div>
+                <div class="field">
+                    <label>Location</label>
+                    <input type="text" id="editLocation">
+                </div>
+                <div class="field">
+                    <label>Course Type</label>
+                    <input type="text" id="editCourseType">
+                </div>
+                <div class="field">
+                    <label>Cost</label>
+                    <input type="text" id="editCost">
+                </div>
+                <div class="field">
+                    <label>Skills</label>
+                    <textarea id="editSkills"></textarea>
+                </div>
+                <div class="field">
+                    <label>Learning Objectives</label>
+                    <textarea id="editObjectives"></textarea>
+                </div>
+                <div class="field">
+                    <label>Provided Materials</label>
+                    <textarea id="editMaterials"></textarea>
+                </div>
+                <div class="field">
+                    <label>Description</label>
+                    <textarea id="editDescription"></textarea>
+                </div>
+                <button type="submit" class="save-btn">Save Course</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allCourses = [];
+        
+        async function loadCourses() {
+            try {
+                const response = await fetch('/api/courses');
+                const data = await response.json();
+                allCourses = data.courses;
+                displayCourses(allCourses);
+                populateFilters(allCourses);
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+        
+        function displayCourses(courses) {
+            const grid = document.getElementById('courseGrid');
+            if (courses.length === 0) {
+                grid.innerHTML = '<div class="no-results">No courses found</div>';
+                return;
+            }
+            
+            grid.innerHTML = courses.map(course => `
+                <div class="course-card">
+                    <div class="class-id">${course.class_id || 'N/A'}</div>
+                    <h3>${course.title}</h3>
+                    <div class="info"><strong>Instructor:</strong> ${course.instructor || 'N/A'}</div>
+                    <div class="info"><strong>Location:</strong> ${course.location || 'N/A'}</div>
+                    <div class="info"><strong>Type:</strong> ${course.course_type || 'N/A'}</div>
+                    <div class="cost">${course.cost || 'N/A'}</div>
+                    <div class="actions">
+                        <button class="view-btn" onclick="viewCourse(${course.id})">View Details</button>
+                        <button class="edit-btn" onclick="editCourse(${course.id})">Edit</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function populateFilters(courses) {
+            const locations = [...new Set(courses.map(c => c.location).filter(Boolean))];
+            const types = [...new Set(courses.map(c => c.course_type).filter(Boolean))];
+            
+            const locationFilter = document.getElementById('locationFilter');
+            locationFilter.innerHTML = '<option value="">All Locations</option>' +
+                locations.map(loc => `<option value="${loc}">${loc}</option>`).join('');
+            
+            const typeFilter = document.getElementById('typeFilter');
+            typeFilter.innerHTML = '<option value="">All Types</option>' +
+                types.map(type => `<option value="${type}">${type}</option>`).join('');
+        }
+        
+        async function searchCourses() {
+            const search = document.getElementById('searchInput').value;
+            const location = document.getElementById('locationFilter').value;
+            const type = document.getElementById('typeFilter').value;
+            
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (location) params.append('location', location);
+            if (type) params.append('course_type', type);
+            
+            try {
+                const response = await fetch(`/api/courses?${params}`);
+                const data = await response.json();
+                displayCourses(data.courses);
+            } catch (error) {
+                console.error('Error searching courses:', error);
+            }
+        }
+        
+        async function viewCourse(id) {
+            try {
+                const response = await fetch(`/api/courses/${id}`);
+                const course = await response.json();
+                
+                document.getElementById('viewContent').innerHTML = `
+                    <h2>${course.title}</h2>
+                    <p><strong>Class ID:</strong> ${course.class_id || 'N/A'}</p>
+                    <p><strong>Instructor:</strong> ${course.instructor || 'N/A'}</p>
+                    <p><strong>Location:</strong> ${course.location || 'N/A'}</p>
+                    <p><strong>Type:</strong> ${course.course_type || 'N/A'}</p>
+                    <p><strong>Cost:</strong> ${course.cost || 'N/A'}</p>
+                    <p><strong>Skills:</strong> ${course.skills || 'N/A'}</p>
+                    <h3>Learning Objectives</h3>
+                    <p>${course.learning_objectives || 'N/A'}</p>
+                    <h3>Provided Materials</h3>
+                    <p>${course.provided_materials || 'N/A'}</p>
+                    <h3>Description</h3>
+                    <p>${course.description || 'N/A'}</p>
+                `;
+                
+                document.getElementById('viewModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading course:', error);
+            }
+        }
+        
+        async function editCourse(id) {
+            try {
+                const response = await fetch(`/api/courses/${id}`);
+                const course = await response.json();
+                
+                document.getElementById('editTitle').textContent = 'Edit Course';
+                document.getElementById('editId').value = course.id;
+                document.getElementById('editClassId').value = course.class_id || '';
+                document.getElementById('editTitleField').value = course.title || '';
+                document.getElementById('editInstructor').value = course.instructor || '';
+                document.getElementById('editLocation').value = course.location || '';
+                document.getElementById('editCourseType').value = course.course_type || '';
+                document.getElementById('editCost').value = course.cost || '';
+                document.getElementById('editSkills').value = course.skills || '';
+                document.getElementById('editObjectives').value = course.learning_objectives || '';
+                document.getElementById('editMaterials').value = course.provided_materials || '';
+                document.getElementById('editDescription').value = course.description || '';
+                
+                document.getElementById('editModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading course:', error);
+            }
+        }
+        
+        function openAddModal() {
+            document.getElementById('editTitle').textContent = 'Add New Course';
+            document.getElementById('editForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('editId').value;
+            const courseData = {
+                class_id: document.getElementById('editClassId').value,
+                title: document.getElementById('editTitleField').value,
+                instructor: document.getElementById('editInstructor').value,
+                location: document.getElementById('editLocation').value,
+                course_type: document.getElementById('editCourseType').value,
+                cost: document.getElementById('editCost').value,
+                skills: document.getElementById('editSkills').value,
+                learning_objectives: document.getElementById('editObjectives').value,
+                provided_materials: document.getElementById('editMaterials').value,
+                description: document.getElementById('editDescription').value
+            };
+            
+            try {
+                const url = id ? `/api/courses/${id}` : '/api/courses';
+                const method = id ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(courseData)
+                });
+                
+                if (response.ok) {
+                    closeModal('editModal');
+                    loadCourses();
+                } else {
+                    alert('Error saving course');
+                }
+            } catch (error) {
+                console.error('Error saving course:', error);
+                alert('Error saving course');
+            }
+        });
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+        
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchCourses();
+        });
+        
+        loadCourses();
+    </script>
+</body>
+</html>
