@@ -7,7 +7,7 @@
 
 ## Your Config
 - **Supabase Project**: https://pbfeqrtdogwcyyiyeicr.supabase.co
-- **Database URL**: `postgres://postgres:s4H1gwGhpB5zgjzM@db.pbfeqrtdogwcyyiyeicr.supabase.co:5432/postgres`
+- **Database URL**: Get from Supabase Settings → Database → Connection string (URI)
 
 ---
 
@@ -40,7 +40,7 @@ If you want to store PDFs in Google Cloud Storage:
 gcloud run deploy school-of-dandori \
   --source . \
   --region us-central1 \
-  --set-env-vars DATABASE_URL="postgres://postgres:s4H1gwGhpB5zgjzM@db.pbfeqrtdogwcyyiyeicr.supabase.co:5432/postgres" \
+  --set-env-vars DATABASE_URL="postgres://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:5432/postgres" \
   --allow-unauthenticated
 ```
 
@@ -55,7 +55,7 @@ echo $GCS_KEY | base64 -w0
 gcloud run deploy school-of-dandori \
   --source . \
   --region us-central1 \
-  --set-env-vars DATABASE_URL="postgres://postgres:s4H1gwGhpB5zgjzM@db.pbfeqrtdogwcyyiyeicr.supabase.co:5432/postgres",GCS_BUCKET_NAME="your-bucket-name",GCS_CREDENTIALS_JSON="$GCS_KEY" \
+  --set-env-vars DATABASE_URL="postgres://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:5432/postgres",GCS_BUCKET_NAME="your-bucket-name",GCS_CREDENTIALS_JSON="$GCS_KEY" \
   --allow-unauthenticated
 ```
 
@@ -86,7 +86,7 @@ pip install -r requirements.txt
 python api.py
 
 # Run locally with Supabase
-export DATABASE_URL="postgres://postgres:s4H1gwGhpB5zgjzM@db.pbfeqrtdogwcyyiyeicr.supabase.co:5432/postgres"
+export DATABASE_URL="postgres://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT].supabase.co:5432/postgres"
 python api.py
 
 # Run locally with GCS
